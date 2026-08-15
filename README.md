@@ -1,63 +1,80 @@
-# Exoplanet Analytics Dashboard
+# Exoplanet Analytics
 
-A Streamlit app that fetches exoplanet parameters from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP service, cleans the data with pandas, and plots planetary mass vs. orbital period on an interactive log-log chart. Selecting a planet sends its mass and orbital period to OpenAI (`gpt-3.5-turbo`) for a short, speculative climate/environment hypothesis.
+Fetches exoplanet parameters from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP service, cleans the data with pandas, and plots planetary mass vs. orbital period on an interactive log-log chart. Selecting a planet sends its mass and orbital period to OpenAI (`gpt-3.5-turbo`) for a short, speculative climate/environment hypothesis.
 
-**[Live demo](https://exoplanet-pipeline.streamlit.app/)**
-
-## Features
-
-- Ingests JSON from the NASA Exoplanet Archive TAP endpoint (`ps` table: `pl_name`, `pl_bmasse`, `pl_orbper`)
-- Cleans missing or non-numeric values and deduplicates by planet name
-- Interactive Plotly scatter plot (log mass vs. log orbital period) with hover labels
-- Planet selector with mass and orbital period metrics
-- Optional OpenAI-generated 2-sentence hypothesis based on the selected planet’s mass and period
+The UI is a React app. FastAPI serves the NASA data and the OpenAI call so the API key never goes to the browser.
 
 > **Note:** AI output is speculative and for exploration only—not a scientific assessment.
 
-## Tech stack
+## Architecture
 
-| Area | Libraries |
-| --- | --- |
-| App / UI | `streamlit` |
-| Data fetch & clean | `requests`, `pandas` |
-| Visualization | `plotly` |
-| AI hypothesis | `openai` (`gpt-3.5-turbo`) |
-| Standalone plot script | `matplotlib` (see `exoplanet.py`; not required for the Streamlit app) |
+```
+React (localhost:5173)
+  GET  /planets   → cleaned planet rows (for the dropdown + chart)
+  POST /analyze   → AI hypothesis for the selected planet
+        ↓
+FastAPI (localhost:8000)
+  NASA TAP fetch → pandas clean/dedupe → 24h in-memory cache
+  OpenAI call (key in api/.env)
+```
+
+`app.py` is the original Streamlit version (same pipeline). Left in place so you can compare.
 
 ## Project structure
 
 ```
-app.py           # Streamlit dashboard (main app)
-exoplanet.py     # Standalone matplotlib scatter plot (no Streamlit/OpenAI)
-requirements.txt # Dependencies for the Streamlit app
+api/main.py           # FastAPI: same TAP + pandas + OpenAI logic as app.py
+api/.env.example      # copy to api/.env and add your OpenAI key
+frontend/.env.example # optional; defaults to http://localhost:8000
+frontend/             # React UI (Vite)
+app.py                # Original Streamlit app
+exoplanet.py          # Standalone matplotlib plot (unchanged)
 ```
 
 ## Setup
 
-1. Clone the repo and install dependencies:
+### API
+
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r api/requirements.txt
+cp api/.env.example api/.env   # then set OPENAI_API_KEY
+uvicorn api.main:app --reload --reload-dir api --port 8000
+```
+
+### Frontend (second terminal)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+The first `/planets` request downloads the NASA TAP dump and caches it in the API process for 24 hours.
+
+## Environment variables
+
+Local defaults work without extra frontend config. For Vercel + Railway:
+
+| Where | Variable | Example |
+| --- | --- | --- |
+| Railway (API) | `OPENAI_API_KEY` | `sk-...` |
+| Railway (API) | `CORS_ORIGINS` | `https://your-app.vercel.app` |
+| Vercel (frontend, set before build) | `VITE_API_URL` | `https://your-api.up.railway.app` |
+
+`VITE_API_URL` is baked in at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
+
+## Original Streamlit app
 
 ```bash
 pip install -r requirements.txt
-```
-
-2. Add an OpenAI API key in `.streamlit/secrets.toml`:
-
-```toml
-OPENAI_API_KEY = "your-key-here"
-```
-
-3. Run the app:
-
-```bash
 streamlit run app.py
 ```
 
-To regenerate the static mass vs. period plot without Streamlit:
-
-```bash
-pip install matplotlib
-python exoplanet.py
-```
+Secrets live in `.streamlit/secrets.toml` (gitignored).
 
 ## Data source
 
