@@ -1,49 +1,57 @@
 # Exoplanet Analytics
 
-Fetches exoplanet parameters from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP service, cleans the data with pandas, and plots planetary mass vs. orbital period on an interactive log-log chart. Selecting a planet sends its mass and orbital period to OpenAI (`gpt-3.5-turbo`) for a short, speculative climate/environment hypothesis.
+An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a log-log chart, plus an optional AI hypothesis for a selected planet.
 
-The UI is a React app. FastAPI serves the NASA data and the OpenAI call so the API key never goes to the browser.
+**[Live demo](https://exoplanet-analytics.vercel.app/)** — the first load can take up to a minute while the catalog is fetched from NASA.
 
-> **Note:** AI output is speculative and for exploration only—not a scientific assessment.
+> AI output is speculative and for exploration only. It is not a scientific assessment.
+
+## Features
+
+- Ingests `pl_name`, `pl_bmasse`, and `pl_orbper` from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `ps` table
+- Cleans non-numeric values and keeps one row per planet name
+- Interactive Plotly scatter (log mass vs. log period) with hover labels
+- Planet selector with formatted mass and orbital-period metrics
+- Optional OpenAI (`gpt-3.5-turbo`) 2-sentence climate/environment hypothesis
 
 ## Architecture
 
 ```
-React (localhost:5173)
-  GET  /planets   → cleaned planet rows (for the dropdown + chart)
-  POST /analyze   → AI hypothesis for the selected planet
-        ↓
-FastAPI (localhost:8000)
-  NASA TAP fetch → pandas clean/dedupe → 24h in-memory cache
-  OpenAI call (key in api/.env)
+React (Vercel)                          FastAPI (Render)
+  GET  /planets  ─────────────────────►  NASA TAP → pandas → 24h cache
+  POST /analyze  ─────────────────────►  OpenAI (key stays on the server)
 ```
 
-`app.py` is the original Streamlit version (same pipeline). Left in place so you can compare.
+Locally the same split runs at `localhost:5173` → `localhost:8000`. The browser never receives the OpenAI key.
 
-## Project structure
+| Layer | Stack |
+| --- | --- |
+| UI | React, Vite, Plotly.js |
+| API | FastAPI, pandas, requests |
+| Data | NASA Exoplanet Archive TAP |
+| AI | OpenAI `gpt-3.5-turbo` |
+| Hosting | Vercel (frontend), Render (API) |
 
 ```
-api/main.py           # FastAPI: same TAP + pandas + OpenAI logic as app.py
-api/.env.example      # copy to api/.env and add your OpenAI key
-frontend/.env.example # optional; defaults to http://localhost:8000
-frontend/             # React UI (Vite)
-app.py                # Original Streamlit app
-exoplanet.py          # Standalone matplotlib plot (unchanged)
+api/main.py            FastAPI: TAP fetch, cleanup, cache, OpenAI
+api/.env.example       OPENAI_API_KEY, CORS_ORIGINS
+frontend/              React UI
+frontend/.env.example  VITE_API_URL (defaults to http://localhost:8000)
 ```
 
-## Setup
+## Local setup
 
-### API
+**API**
 
 ```bash
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -r api/requirements.txt
-cp api/.env.example api/.env   # then set OPENAI_API_KEY
+cp api/.env.example api/.env   # set OPENAI_API_KEY
 uvicorn api.main:app --reload --reload-dir api --port 8000
 ```
 
-### Frontend (second terminal)
+**Frontend** (second terminal)
 
 ```bash
 cd frontend
@@ -51,37 +59,30 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
-
-The first `/planets` request downloads the NASA TAP dump and caches it in the API process for 24 hours.
+Open [http://localhost:5173](http://localhost:5173). The first `/planets` call downloads the TAP dump and caches it in the API process for 24 hours.
 
 ## Environment variables
 
-Local defaults work without extra frontend config. For Vercel + Railway:
+Local defaults work without a frontend `.env`. Production:
 
-| Where | Variable | Example |
+| Where | Variable | Value |
 | --- | --- | --- |
-| Railway (API) | `OPENAI_API_KEY` | `sk-...` |
-| Railway (API) | `CORS_ORIGINS` | `https://your-app.vercel.app` |
-| Vercel (frontend, set before build) | `VITE_API_URL` | `https://your-api.up.railway.app` |
+| Render | `OPENAI_API_KEY` | server-side secret |
+| Render | `CORS_ORIGINS` | `https://exoplanet-analytics.vercel.app` |
+| Vercel (set before build) | `VITE_API_URL` | `https://exoplanet-api-rpsl.onrender.com` |
 
-`VITE_API_URL` is baked in at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
-
-## Original Streamlit app
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-Secrets live in `.streamlit/secrets.toml` (gitignored).
+`VITE_API_URL` is inlined at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
 
 ## Data source
 
-NASA Exoplanet Archive TAP sync query against the Planetary Systems (`ps`) table:
+TAP query against Planetary Systems (`ps`):
 
 ```
 select pl_name, pl_bmasse, pl_orbper from ps
 ```
 
-`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. The query does not filter by solution type or default flag; the app keeps one row per planet name after cleaning.
+`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. The query does not filter by solution type or default flag; after cleaning, the app keeps one row per planet name.
+
+## Legacy
+
+`app.py` is the original Streamlit app (`streamlit run app.py`). `exoplanet.py` is a standalone matplotlib plot and is not used by the dashboard.
