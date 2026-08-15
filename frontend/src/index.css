@@ -1,5 +1,23 @@
+:root {
+  --bg: #0c1016;
+  --surface: #141b24;
+  --border: #243040;
+  --text: #e8edf2;
+  --muted: #8b98a8;
+  --accent: #5b9fd4;
+  --accent-hover: #7eb6e0;
+  --danger: #e07a7a;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
-  background: #fff;
-  color: #111;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }

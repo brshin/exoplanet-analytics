@@ -7,6 +7,22 @@ const Plot = createPlotlyComponent(Plotly)
 
 const API = 'http://localhost:8000'
 
+const CHART = {
+  bg: '#0c1016',
+  plot: '#121820',
+  text: '#c5d0dc',
+  grid: '#243040',
+  marker: '#5b9fd4',
+  selected: '#e8edf2',
+}
+
+function formatNumber(n) {
+  if (n == null || Number.isNaN(Number(n))) return '—'
+  const value = Number(n)
+  const digits = value >= 100 ? 1 : value >= 1 ? 2 : 3
+  return value.toLocaleString(undefined, { maximumFractionDigits: digits })
+}
+
 function App() {
   const [planets, setPlanets] = useState([])
   const [selectedPlanet, setSelectedPlanet] = useState('')
@@ -32,6 +48,7 @@ function App() {
   const selected = planets.find((p) => p.pl_name === selectedPlanet)
   const selectedPlanetMass = selected?.pl_bmasse
   const selectedPlanetOrbitalPeriod = selected?.pl_orbper
+  const otherPlanets = planets.filter((p) => p.pl_name !== selectedPlanet)
 
   function generateAiAnalysis() {
     setLoadingAi(true)
@@ -52,29 +69,39 @@ function App() {
       .finally(() => setLoadingAi(false))
   }
 
-  if (loadingPlanets) return <p>Loading planets from NASA...</p>
-  if (error && planets.length === 0) return <p>{error}</p>
+  if (loadingPlanets) {
+    return <p className="status-screen">Loading NASA catalog…</p>
+  }
+
+  if (error && planets.length === 0) {
+    return <p className="status-screen error">{error}</p>
+  }
 
   return (
     <div className="app">
-      <h1>NASA Exoplanet Dashboard</h1>
-      <p>Hover over the dots to see the name of the planet!</p>
-
-      <label htmlFor="planet-select">Select a planet to analyze:</label>
-      <select
-        id="planet-select"
-        value={selectedPlanet}
-        onChange={(e) => {
-          setSelectedPlanet(e.target.value)
-          setAiSummary('')
-        }}
-      >
-        {planets.map((p) => (
-          <option key={p.pl_name} value={p.pl_name}>
-            {p.pl_name}
-          </option>
-        ))}
-      </select>
+      <header className="header">
+        <div>
+          <h1>NASA Exoplanet Dashboard</h1>
+          <p className="subtitle">Hover a point to see the planet name</p>
+        </div>
+        <div className="planet-picker">
+          <label htmlFor="planet-select">Planet</label>
+          <select
+            id="planet-select"
+            value={selectedPlanet}
+            onChange={(e) => {
+              setSelectedPlanet(e.target.value)
+              setAiSummary('')
+            }}
+          >
+            {planets.map((p) => (
+              <option key={p.pl_name} value={p.pl_name}>
+                {p.pl_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </header>
 
       <div className="metrics">
         <div className="metric">
@@ -82,43 +109,83 @@ function App() {
           <span className="metric-value">{selectedPlanet}</span>
         </div>
         <div className="metric">
-          <span className="metric-label">Mass (Earth Masses)</span>
-          <span className="metric-value">{selectedPlanetMass}</span>
+          <span className="metric-label">Mass (Earth masses)</span>
+          <span className="metric-value">{formatNumber(selectedPlanetMass)}</span>
         </div>
         <div className="metric">
-          <span className="metric-label">Orbital Period (Days)</span>
-          <span className="metric-value">{selectedPlanetOrbitalPeriod}</span>
+          <span className="metric-label">Orbital period (days)</span>
+          <span className="metric-value">{formatNumber(selectedPlanetOrbitalPeriod)}</span>
         </div>
       </div>
 
-      <button onClick={generateAiAnalysis} disabled={loadingAi || !selectedPlanet}>
-        Generate AI Analysis
-      </button>
+      <div className="chart">
+        <Plot
+          data={[
+            {
+              x: otherPlanets.map((p) => p.pl_bmasse),
+              y: otherPlanets.map((p) => p.pl_orbper),
+              text: otherPlanets.map((p) => p.pl_name),
+              type: 'scatter',
+              mode: 'markers',
+              marker: { size: 6, color: CHART.marker, opacity: 0.55 },
+              hovertemplate: '%{text}<extra></extra>',
+            },
+            {
+              x: selected ? [selected.pl_bmasse] : [],
+              y: selected ? [selected.pl_orbper] : [],
+              text: selected ? [selected.pl_name] : [],
+              type: 'scatter',
+              mode: 'markers',
+              marker: { size: 11, color: CHART.selected, opacity: 0.95 },
+              hovertemplate: '%{text}<extra></extra>',
+              showlegend: false,
+            },
+          ]}
+          layout={{
+            title: {
+              text: 'Planet mass vs orbital period',
+              font: { size: 15, color: CHART.text },
+            },
+            paper_bgcolor: CHART.bg,
+            plot_bgcolor: CHART.plot,
+            font: { family: 'IBM Plex Sans, sans-serif', color: CHART.text },
+            xaxis: {
+              type: 'log',
+              title: { text: 'Mass (Earth masses)' },
+              gridcolor: CHART.grid,
+              zeroline: false,
+              color: CHART.text,
+            },
+            yaxis: {
+              type: 'log',
+              title: { text: 'Orbital period (days)' },
+              gridcolor: CHART.grid,
+              zeroline: false,
+              color: CHART.text,
+            },
+            margin: { t: 48, r: 24, b: 56, l: 64 },
+            autosize: true,
+            showlegend: false,
+          }}
+          config={{ displaylogo: false, responsive: true }}
+          useResizeHandler
+          style={{ width: '100%', height: '520px' }}
+        />
+      </div>
 
-      {loadingAi && <p>Connecting to AI...</p>}
-      {aiSummary && <p className="ai-summary">{aiSummary}</p>}
-      {error && planets.length > 0 && <p className="error">{error}</p>}
-
-      <Plot
-        data={[
-          {
-            x: planets.map((p) => p.pl_bmasse),
-            y: planets.map((p) => p.pl_orbper),
-            text: planets.map((p) => p.pl_name),
-            type: 'scatter',
-            mode: 'markers',
-            hovertemplate: '%{text}<extra></extra>',
-          },
-        ]}
-        layout={{
-          title: { text: 'Planet Mass vs Orbital Period' },
-          xaxis: { type: 'log', title: { text: 'pl_bmasse' } },
-          yaxis: { type: 'log', title: { text: 'pl_orbper' } },
-          autosize: true,
-        }}
-        useResizeHandler
-        style={{ width: '100%', height: '500px' }}
-      />
+      <section className="ai-panel">
+        <button onClick={generateAiAnalysis} disabled={loadingAi || !selectedPlanet}>
+          Generate AI Analysis
+        </button>
+        {loadingAi && <p className="ai-status">Connecting to AI…</p>}
+        {aiSummary && (
+          <div className="ai-summary">
+            <p className="ai-caption">Speculative · GPT-3.5</p>
+            <p>{aiSummary}</p>
+          </div>
+        )}
+        {error && planets.length > 0 && <p className="error">{error}</p>}
+      </section>
     </div>
   )
 }
