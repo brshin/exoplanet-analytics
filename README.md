@@ -2,7 +2,9 @@
 
 Fetches exoplanet parameters from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP service, cleans the data with pandas, and plots planetary mass vs. orbital period on an interactive log-log chart. Selecting a planet sends its mass and orbital period to OpenAI (`gpt-3.5-turbo`) for a short, speculative climate/environment hypothesis.
 
-The UI is a React app. FastAPI serves the NASA data and the OpenAI call so the API key never goes to the browser.
+**[Live demo](https://exoplanet-analytics.vercel.app/)**
+
+The UI is a React app. FastAPI on Render serves the NASA data and the OpenAI call so the API key never goes to the browser. The first request can take about a minute while the catalog is fetched from NASA.
 
 > **Note:** AI output is speculative and for exploration only—not a scientific assessment.
 
@@ -57,13 +59,13 @@ The first `/planets` request downloads the NASA TAP dump and caches it in the AP
 
 ## Environment variables
 
-Local defaults work without extra frontend config. For Vercel + Railway:
+Local defaults work without extra frontend config. For Vercel + Render:
 
 | Where | Variable | Example |
 | --- | --- | --- |
-| Railway (API) | `OPENAI_API_KEY` | `sk-...` |
-| Railway (API) | `CORS_ORIGINS` | `https://your-app.vercel.app` |
-| Vercel (frontend, set before build) | `VITE_API_URL` | `https://your-api.up.railway.app` |
+| Render (API) | `OPENAI_API_KEY` | `sk-...` |
+| Render (API) | `CORS_ORIGINS` | `https://exoplanet-analytics.vercel.app` |
+| Vercel (frontend, set before build) | `VITE_API_URL` | `https://exoplanet-api-rpsl.onrender.com` |
 
 `VITE_API_URL` is baked in at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
 

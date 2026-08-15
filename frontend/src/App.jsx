@@ -70,7 +70,13 @@ function App() {
   }
 
   if (loadingPlanets) {
-    return <p className="status-screen">Loading catalog…</p>
+    return (
+      <p className="status-screen">
+        Loading the exoplanet catalog from the NASA Exoplanet Archive.
+        <br />
+        The first request can take up to a minute.
+      </p>
+    )
   }
 
   if (error && planets.length === 0) {
