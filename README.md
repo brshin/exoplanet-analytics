@@ -25,6 +25,7 @@ FastAPI (localhost:8000)
 ```
 api/main.py           # FastAPI: same TAP + pandas + OpenAI logic as app.py
 api/.env.example      # copy to api/.env and add your OpenAI key
+frontend/.env.example # optional; defaults to http://localhost:8000
 frontend/             # React UI (Vite)
 app.py                # Original Streamlit app
 exoplanet.py          # Standalone matplotlib plot (unchanged)
@@ -53,6 +54,18 @@ npm run dev
 Open [http://localhost:5173](http://localhost:5173).
 
 The first `/planets` request downloads the NASA TAP dump and caches it in the API process for 24 hours.
+
+## Environment variables
+
+Local defaults work without extra frontend config. For Vercel + Railway:
+
+| Where | Variable | Example |
+| --- | --- | --- |
+| Railway (API) | `OPENAI_API_KEY` | `sk-...` |
+| Railway (API) | `CORS_ORIGINS` | `https://your-app.vercel.app` |
+| Vercel (frontend, set before build) | `VITE_API_URL` | `https://your-api.up.railway.app` |
+
+`VITE_API_URL` is baked in at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
 
 ## Original Streamlit app
 

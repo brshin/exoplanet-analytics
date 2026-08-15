@@ -5,7 +5,7 @@ import './App.css'
 
 const Plot = createPlotlyComponent(Plotly)
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const CHART = {
   bg: '#0c1016',

@@ -12,14 +12,22 @@ from pydantic import BaseModel
 
 # Same key you used in .streamlit/secrets.toml — now an env var so React never sees it.
 load_dotenv(Path(__file__).resolve().parent / ".env")
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
 
 app = FastAPI()
 
-# React (Vite) runs on :5173; the API on :8000. Browsers block that unless we allow it.
+# React (Vite) and the API are different origins. Allowlist comes from CORS_ORIGINS.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -38,7 +46,7 @@ def load_planets():
     if _cache["dfUnique"] is not None and now - _cache["fetched_at"] < CACHE_TTL_SECONDS:
         return _cache["dfUnique"]
 
-    response = requests.get(targetUrl)
+    response = requests.get(targetUrl, timeout=60)
 
     if response.status_code != 200:
         print("Failed to connect.")
@@ -77,6 +85,10 @@ class AnalyzeRequest(BaseModel):
 
 @app.post("/analyze")
 def analyze(body: AnalyzeRequest):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not set.")
+
     dfUnique = load_planets()
     selectedPlanet = body.selectedPlanet
 
@@ -92,6 +104,7 @@ def analyze(body: AnalyzeRequest):
 
     prompt = f"Act as a NASA astrophysicist. I am analyzing exoplanet {selectedPlanet}. It has a mass of {selectedPlanetMass} Earth masses and an orbital period of {selectedPlanetOrbitalPeriod} days. Give me a 2-sentence scientific hypothesis of what its climate or environment might be like."
 
+    client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
