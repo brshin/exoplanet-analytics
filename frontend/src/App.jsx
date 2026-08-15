@@ -70,7 +70,7 @@ function App() {
   }
 
   if (loadingPlanets) {
-    return <p className="status-screen">Loading NASA catalog…</p>
+    return <p className="status-screen">Loading catalog…</p>
   }
 
   if (error && planets.length === 0) {
@@ -81,8 +81,14 @@ function App() {
     <div className="app">
       <header className="header">
         <div>
-          <h1>NASA Exoplanet Dashboard</h1>
-          <p className="subtitle">Hover a point to see the planet name</p>
+          <h1>Exoplanet Analytics</h1>
+          <p className="subtitle">
+            Data from the{' '}
+            <a href="https://exoplanetarchive.ipac.caltech.edu/" target="_blank" rel="noreferrer">
+              NASA Exoplanet Archive
+            </a>
+            . Hover a point to see the planet name.
+          </p>
         </div>
         <div className="planet-picker">
           <label htmlFor="planet-select">Planet</label>

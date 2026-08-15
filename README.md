@@ -1,4 +1,4 @@
-# Exoplanet Analytics Dashboard
+# Exoplanet Analytics
 
 Fetches exoplanet parameters from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP service, cleans the data with pandas, and plots planetary mass vs. orbital period on an interactive log-log chart. Selecting a planet sends its mass and orbital period to OpenAI (`gpt-3.5-turbo`) for a short, speculative climate/environment hypothesis.
 
