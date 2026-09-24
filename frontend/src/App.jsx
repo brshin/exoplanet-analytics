@@ -89,9 +89,7 @@ function App() {
   if (loadingPlanets) {
     return (
       <p className="status-screen">
-        Loading the exoplanet catalog from the NASA Exoplanet Archive.
-        <br />
-        The first request can take up to a minute.
+        Loading the exoplanet catalog.
       </p>
     )
   }
