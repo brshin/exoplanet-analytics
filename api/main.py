@@ -32,8 +32,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ps has many published solutions per planet. default_flag = 1 is NASA's chosen row.
-targetUrl = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,pl_bmasse,pl_orbper+from+ps+where+default_flag=1&format=json"
+# pscomppars is one composite row per planet. Mass and period can come from different papers.
+targetUrl = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,pl_bmasse,pl_orbper+from+pscomppars&format=json"
 
 # NASA updates ~weekly. Cache the cleaned table in this process so each page load
 # does not re-download the full TAP dump.

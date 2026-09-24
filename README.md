@@ -8,7 +8,7 @@ An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a 
 
 ## Features
 
-- Ingests `pl_name`, `pl_bmasse`, and `pl_orbper` from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `ps` table, keeping NASA's default solution (`default_flag = 1`)
+- Ingests `pl_name`, `pl_bmasse`, and `pl_orbper` from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `pscomppars` table (one composite row per planet)
 - Cleans non-numeric values and keeps one row per planet name
 - Interactive Plotly scatter (log mass vs. log period) with hover labels
 - Planet selector with formatted mass and orbital-period metrics
@@ -75,13 +75,13 @@ Local defaults work without a frontend `.env`. Production:
 
 ## Data source
 
-TAP query against Planetary Systems (`ps`):
+TAP query against Planetary Systems Composite Parameters (`pscomppars`):
 
 ```
-select pl_name, pl_bmasse, pl_orbper from ps where default_flag = 1
+select pl_name, pl_bmasse, pl_orbper from pscomppars
 ```
 
-`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. `default_flag = 1` is NASA's chosen parameter set for that planet. After cleaning, the app keeps one row per planet name.
+`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. `pscomppars` keeps one row per planet and fills each column from the best available reference, so a mass from one paper can sit next to a period from another. After cleaning, the app keeps one row per planet name.
 
 ## Legacy
 
