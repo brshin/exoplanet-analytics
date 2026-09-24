@@ -1,9 +1,7 @@
 import os
-import time
 from pathlib import Path
 
 import pandas as pd
-import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,38 +30,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# pscomppars is one composite row per planet. Mass and period can come from different papers.
-targetUrl = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,pl_bmasse,pl_orbper+from+pscomppars&format=json"
-
-# NASA updates ~weekly. Cache the cleaned table in this process so each page load
-# does not re-download the full TAP dump.
-_cache = {"dfUnique": None, "fetched_at": 0}
-CACHE_TTL_SECONDS = 60 * 60 * 24
+# Written by scripts/refresh_planets.py. The request path never calls NASA.
+PLANETS_PATH = Path(__file__).resolve().parent / "planets.json"
+_cache = {"dfUnique": None, "mtime": None}
 
 
 def load_planets():
-    now = time.time()
-    if _cache["dfUnique"] is not None and now - _cache["fetched_at"] < CACHE_TTL_SECONDS:
+    if not PLANETS_PATH.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Planet catalog is missing. Run python scripts/refresh_planets.py.",
+        )
+
+    mtime = PLANETS_PATH.stat().st_mtime
+    if _cache["dfUnique"] is not None and _cache["mtime"] == mtime:
         return _cache["dfUnique"]
 
-    response = requests.get(targetUrl, timeout=60)
-
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail="Failed to connect to NASA Exoplanet Archive.")
-
-    raw_data = response.json()
-
-    df = pd.DataFrame(raw_data)
-
-    df["pl_bmasse"] = pd.to_numeric(df["pl_bmasse"], errors="coerce")
-    df["pl_orbper"] = pd.to_numeric(df["pl_orbper"], errors="coerce")
-
-    df = df.dropna()
-
-    dfUnique = df.drop_duplicates(subset="pl_name")
-
+    dfUnique = pd.read_json(PLANETS_PATH)
     _cache["dfUnique"] = dfUnique
-    _cache["fetched_at"] = now
+    _cache["mtime"] = mtime
     return dfUnique
 
 

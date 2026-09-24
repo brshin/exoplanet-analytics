@@ -2,7 +2,7 @@
 
 An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a log-log chart, plus an optional AI hypothesis for a selected planet.
 
-**[Live demo](https://exoplanet-analytics.vercel.app/)** — the first load can take up to a minute while the catalog is fetched from NASA.
+**[Live demo](https://exoplanet-analytics.vercel.app/)** — the catalog is a saved file, so the chart does not wait on NASA. A cold Render instance can still take a moment to wake before the API answers.
 
 > AI output is speculative and for exploration only. It is not a scientific assessment.
 
@@ -18,8 +18,11 @@ An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a 
 
 ```
 React (Vercel)                          FastAPI (Render)
-  GET  /planets  ─────────────────────►  NASA TAP → pandas → 24h cache
+  GET  /planets  ─────────────────────►  api/planets.json
   POST /analyze  ─────────────────────►  OpenAI (key stays on the server)
+
+Weekly GitHub Action
+  NASA TAP → pandas cleanup → commit api/planets.json
 ```
 
 Locally the same split runs at `localhost:5173` → `localhost:8000`. The browser never receives the OpenAI key.
@@ -33,7 +36,9 @@ Locally the same split runs at `localhost:5173` → `localhost:8000`. The browse
 | Hosting | Vercel (frontend), Render (API) |
 
 ```
-api/main.py            FastAPI: TAP fetch, cleanup, cache, OpenAI
+api/main.py              FastAPI: read api/planets.json, OpenAI
+api/planets.json          cleaned catalog (name, mass, period)
+scripts/refresh_planets.py  weekly TAP fetch, cleanup, and JSON write
 api/.env.example       OPENAI_API_KEY, CORS_ORIGINS
 frontend/              React UI
 frontend/.env.example  VITE_API_URL (defaults to http://localhost:8000)
@@ -59,7 +64,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The first `/planets` call downloads the TAP dump and caches it in the API process for 24 hours.
+Open [http://localhost:5173](http://localhost:5173). `/planets` reads `api/planets.json`. Refresh that file with `python scripts/refresh_planets.py`. A GitHub Action runs the same script every Monday.
 
 ## Environment variables
 
@@ -81,7 +86,7 @@ TAP query against Planetary Systems Composite Parameters (`pscomppars`):
 select pl_name, pl_bmasse, pl_orbper from pscomppars
 ```
 
-`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. `pscomppars` keeps one row per planet and fills each column from the best available reference, so a mass from one paper can sit next to a period from another. After cleaning, the app keeps one row per planet name.
+`pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. `pscomppars` keeps one row per planet and fills each column from the best available reference, so a mass from one paper can sit next to a period from another. `scripts/refresh_planets.py` drops rows that are missing either value and writes one row per planet name to `api/planets.json`. The NASA Exoplanet Archive adds planets about weekly, which is why the refresh job runs weekly.
 
 ## Legacy
 
