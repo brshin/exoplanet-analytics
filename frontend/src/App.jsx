@@ -284,7 +284,7 @@ function App() {
           {loadingAi && <p className="ai-status">Connecting to AI…</p>}
           {aiSummary && (
             <div className="ai-summary">
-              <p className="ai-caption">Speculative · GPT-3.5</p>
+              <p className="ai-caption">Speculative · GPT-4o mini</p>
               <p>{aiSummary}</p>
             </div>
           )}
