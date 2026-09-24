@@ -32,8 +32,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Same TAP query as app.py
-targetUrl = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,pl_bmasse,pl_orbper+from+ps&format=json"
+# pscomppars is one composite row per planet. Mass and period can come from different papers.
+targetUrl = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,pl_bmasse,pl_orbper+from+pscomppars&format=json"
 
 # NASA updates ~weekly. Cache the cleaned table in this process so each page load
 # does not re-download the full TAP dump.
@@ -49,10 +49,7 @@ def load_planets():
     response = requests.get(targetUrl, timeout=60)
 
     if response.status_code != 200:
-        print("Failed to connect.")
         raise HTTPException(status_code=502, detail="Failed to connect to NASA Exoplanet Archive.")
-
-    print("Connection successful!")
 
     raw_data = response.json()
 
@@ -63,10 +60,7 @@ def load_planets():
 
     df = df.dropna()
 
-    print(df)
-
     dfUnique = df.drop_duplicates(subset="pl_name")
-    print(dfUnique)
 
     _cache["dfUnique"] = dfUnique
     _cache["fetched_at"] = now
@@ -97,10 +91,7 @@ def analyze(body: AnalyzeRequest):
         raise HTTPException(status_code=404, detail="Planet not found.")
 
     selectedPlanetMass = match["pl_bmasse"].values[0]
-    print(selectedPlanetMass)
-
     selectedPlanetOrbitalPeriod = match["pl_orbper"].values[0]
-    print(selectedPlanetOrbitalPeriod)
 
     prompt = f"Act as a NASA astrophysicist. I am analyzing exoplanet {selectedPlanet}. It has a mass of {selectedPlanetMass} Earth masses and an orbital period of {selectedPlanetOrbitalPeriod} days. Give me a 2-sentence scientific hypothesis of what its climate or environment might be like."
 
