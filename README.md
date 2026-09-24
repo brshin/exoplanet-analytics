@@ -77,7 +77,7 @@ Local defaults work without a frontend `.env`. Production:
 | Render | `CORS_ORIGINS` | `https://exoplanet-analytics.vercel.app` |
 | Vercel (set before build) | `VITE_API_URL` | `https://exoplanet-api-rpsl.onrender.com` |
 
-`VITE_API_URL` is inlined at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins.
+`VITE_API_URL` is inlined at build time. `CORS_ORIGINS` is a comma-separated list of allowed frontend origins. Locally, put `OPENAI_API_KEY` in `api/.env`. That file is gitignored and is never sent to the browser.
 
 ## Data source
 
