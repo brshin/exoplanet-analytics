@@ -1,4 +1,3 @@
-.streamlit/
 .env
 api/.env
 .venv
