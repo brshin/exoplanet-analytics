@@ -85,6 +85,9 @@ function App() {
       body: JSON.stringify({ selectedPlanet }),
     })
       .then((res) => {
+        if (res.status === 429) {
+          throw new Error('Too many AI requests from this connection. Try again in an hour.')
+        }
         if (!res.ok) throw new Error('Failed to generate AI analysis')
         return res.json()
       })

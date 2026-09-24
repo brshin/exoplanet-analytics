@@ -1,9 +1,11 @@
 import os
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel
@@ -32,6 +34,28 @@ app.add_middleware(
 # Written by scripts/refresh_planets.py. The request path never calls NASA.
 PLANETS_PATH = Path(__file__).resolve().parent / "planets.json"
 _cache = {"dfUnique": None, "mtime": None}
+
+ANALYZE_LIMIT = 5
+ANALYZE_WINDOW_SECONDS = 60 * 60
+_analyze_hits = defaultdict(deque)
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _allow_analyze(ip: str) -> bool:
+    now = time.time()
+    hits = _analyze_hits[ip]
+    while hits and now - hits[0] >= ANALYZE_WINDOW_SECONDS:
+        hits.popleft()
+    if len(hits) >= ANALYZE_LIMIT:
+        return False
+    hits.append(now)
+    return True
 
 
 def load_planets():
@@ -62,7 +86,13 @@ class AnalyzeRequest(BaseModel):
 
 
 @app.post("/analyze")
-def analyze(body: AnalyzeRequest):
+def analyze(request: Request, body: AnalyzeRequest):
+    if not _allow_analyze(_client_ip(request)):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many AI requests. Try again in an hour.",
+        )
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not set.")
