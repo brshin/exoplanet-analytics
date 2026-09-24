@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Plotly from 'plotly.js-dist-min'
 import createPlotlyComponent from 'react-plotly.js/factory'
 import './App.css'
@@ -30,6 +30,8 @@ function App() {
   const [loadingPlanets, setLoadingPlanets] = useState(true)
   const [loadingAi, setLoadingAi] = useState(false)
   const [error, setError] = useState('')
+  const [query, setQuery] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   useEffect(() => {
     fetch(`${API}/planets`)
@@ -49,6 +51,21 @@ function App() {
   const selectedPlanetMass = selected?.pl_bmasse
   const selectedPlanetOrbitalPeriod = selected?.pl_orbper
   const otherPlanets = planets.filter((p) => p.pl_name !== selectedPlanet)
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const pool = q
+      ? planets.filter((p) => p.pl_name.toLowerCase().includes(q))
+      : planets
+    return pool.slice(0, 8)
+  }, [planets, query])
+
+  function selectPlanet(name) {
+    setSelectedPlanet(name)
+    setQuery('')
+    setPickerOpen(false)
+    setAiSummary('')
+  }
 
   function generateAiAnalysis() {
     setLoadingAi(true)
@@ -93,25 +110,57 @@ function App() {
             <a href="https://exoplanetarchive.ipac.caltech.edu/" target="_blank" rel="noreferrer">
               NASA Exoplanet Archive
             </a>
-            . Hover a point to see the planet name.
+            . {planets.length.toLocaleString()} planets with a measured mass and period. Click a point or search to select one.
           </p>
         </div>
         <div className="planet-picker">
-          <label htmlFor="planet-select">Planet</label>
-          <select
-            id="planet-select"
-            value={selectedPlanet}
-            onChange={(e) => {
-              setSelectedPlanet(e.target.value)
-              setAiSummary('')
+          <label htmlFor="planet-search">Planet</label>
+          <input
+            id="planet-search"
+            type="search"
+            role="combobox"
+            aria-expanded={pickerOpen}
+            aria-controls="planet-suggestions"
+            aria-autocomplete="list"
+            placeholder="Search planets"
+            value={pickerOpen ? query : selectedPlanet}
+            onFocus={() => {
+              setPickerOpen(true)
+              setQuery('')
             }}
-          >
-            {planets.map((p) => (
-              <option key={p.pl_name} value={p.pl_name}>
-                {p.pl_name}
-              </option>
-            ))}
-          </select>
+            onBlur={() => {
+              setPickerOpen(false)
+              setQuery('')
+            }}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && suggestions[0]) {
+                e.preventDefault()
+                selectPlanet(suggestions[0].pl_name)
+              }
+              if (e.key === 'Escape') {
+                e.currentTarget.blur()
+              }
+            }}
+          />
+          {pickerOpen && (
+            <ul id="planet-suggestions" className="suggestions" role="listbox">
+              {suggestions.length === 0 && <li className="suggestion-empty">No matching planets</li>}
+              {suggestions.map((p) => (
+                <li key={p.pl_name}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={p.pl_name === selectedPlanet}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectPlanet(p.pl_name)}
+                  >
+                    {p.pl_name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </header>
 
@@ -178,6 +227,10 @@ function App() {
             margin: { t: 48, r: 24, b: 56, l: 64 },
             autosize: true,
             showlegend: false,
+          }}
+          onClick={(event) => {
+            const name = event.points?.[0]?.text
+            if (name) selectPlanet(name)
           }}
           config={{ displaylogo: false, responsive: true }}
           useResizeHandler
