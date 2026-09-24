@@ -14,6 +14,7 @@ const CHART = {
   grid: '#243040',
   marker: '#5b9fd4',
   selected: '#e8edf2',
+  ring: '#5b9fd4',
 }
 
 function formatNumber(n) {
@@ -32,6 +33,7 @@ function App() {
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [highlightIndex, setHighlightIndex] = useState(0)
 
   useEffect(() => {
     fetch(`${API}/planets`)
@@ -60,10 +62,15 @@ function App() {
     return pool.slice(0, 8)
   }, [planets, query])
 
+  useEffect(() => {
+    setHighlightIndex(0)
+  }, [query, pickerOpen])
+
   function selectPlanet(name) {
     setSelectedPlanet(name)
     setQuery('')
     setPickerOpen(false)
+    setHighlightIndex(0)
     setAiSummary('')
   }
 
@@ -98,21 +105,26 @@ function App() {
     return <p className="status-screen error">{error}</p>
   }
 
+  const activeSuggestion = suggestions[highlightIndex]
+  const activeOptionId = activeSuggestion ? `planet-option-${highlightIndex}` : undefined
+
   return (
     <div className="app">
       <header className="header">
         <div>
           <h1>Exoplanet Analytics</h1>
           <p className="subtitle">
-            Data from the{' '}
+            {planets.length.toLocaleString()} planets with a measured mass and period ·{' '}
             <a href="https://exoplanetarchive.ipac.caltech.edu/" target="_blank" rel="noreferrer">
               NASA Exoplanet Archive
             </a>
-            . {planets.length.toLocaleString()} planets with a measured mass and period. Click a point or search to select one.
           </p>
         </div>
         <div className="planet-picker">
-          <label htmlFor="planet-search">Planet</label>
+          <div className="picker-label-row">
+            <label htmlFor="planet-search">Planet</label>
+            <span className="picker-hint">Click a point or search</span>
+          </div>
           <input
             id="planet-search"
             type="search"
@@ -120,6 +132,7 @@ function App() {
             aria-expanded={pickerOpen}
             aria-controls="planet-suggestions"
             aria-autocomplete="list"
+            aria-activedescendant={pickerOpen ? activeOptionId : undefined}
             placeholder="Search planets"
             value={pickerOpen ? query : selectedPlanet}
             onFocus={() => {
@@ -129,12 +142,28 @@ function App() {
             onBlur={() => {
               setPickerOpen(false)
               setQuery('')
+              setHighlightIndex(0)
             }}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && suggestions[0]) {
+              if (e.key === 'ArrowDown') {
                 e.preventDefault()
-                selectPlanet(suggestions[0].pl_name)
+                if (!pickerOpen) {
+                  setPickerOpen(true)
+                  setQuery('')
+                  return
+                }
+                if (suggestions.length === 0) return
+                setHighlightIndex((i) => (i + 1) % suggestions.length)
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                if (!pickerOpen || suggestions.length === 0) return
+                setHighlightIndex((i) => (i - 1 + suggestions.length) % suggestions.length)
+              }
+              if (e.key === 'Enter' && suggestions[highlightIndex]) {
+                e.preventDefault()
+                selectPlanet(suggestions[highlightIndex].pl_name)
               }
               if (e.key === 'Escape') {
                 e.currentTarget.blur()
@@ -144,13 +173,16 @@ function App() {
           {pickerOpen && (
             <ul id="planet-suggestions" className="suggestions" role="listbox">
               {suggestions.length === 0 && <li className="suggestion-empty">No matching planets</li>}
-              {suggestions.map((p) => (
+              {suggestions.map((p, index) => (
                 <li key={p.pl_name}>
                   <button
                     type="button"
+                    id={`planet-option-${index}`}
                     role="option"
-                    aria-selected={p.pl_name === selectedPlanet}
+                    aria-selected={index === highlightIndex}
+                    className={index === highlightIndex ? 'is-active' : undefined}
                     onMouseDown={(e) => e.preventDefault()}
+                    onMouseEnter={() => setHighlightIndex(index)}
                     onClick={() => selectPlanet(p.pl_name)}
                   >
                     {p.pl_name}
@@ -162,93 +194,100 @@ function App() {
         </div>
       </header>
 
-      <div className="metrics">
-        <div className="metric">
-          <span className="metric-label">Name</span>
-          <span className="metric-value">{selectedPlanet}</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Mass (Earth masses)</span>
-          <span className="metric-value">{formatNumber(selectedPlanetMass)}</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Orbital period (days)</span>
-          <span className="metric-value">{formatNumber(selectedPlanetOrbitalPeriod)}</span>
-        </div>
-      </div>
-
-      <div className="chart">
-        <Plot
-          data={[
-            {
-              x: otherPlanets.map((p) => p.pl_bmasse),
-              y: otherPlanets.map((p) => p.pl_orbper),
-              text: otherPlanets.map((p) => p.pl_name),
-              type: 'scatter',
-              mode: 'markers',
-              marker: { size: 6, color: CHART.marker, opacity: 0.55 },
-              hovertemplate: '%{text}<extra></extra>',
-            },
-            {
-              x: selected ? [selected.pl_bmasse] : [],
-              y: selected ? [selected.pl_orbper] : [],
-              text: selected ? [selected.pl_name] : [],
-              type: 'scatter',
-              mode: 'markers',
-              marker: { size: 11, color: CHART.selected, opacity: 0.95 },
-              hovertemplate: '%{text}<extra></extra>',
-              showlegend: false,
-            },
-          ]}
-          layout={{
-            title: {
-              text: 'Planet mass vs orbital period',
-              font: { size: 15, color: CHART.text },
-            },
-            paper_bgcolor: CHART.bg,
-            plot_bgcolor: CHART.plot,
-            font: { family: 'IBM Plex Sans, sans-serif', color: CHART.text },
-            xaxis: {
-              type: 'log',
-              title: { text: 'Mass (Earth masses)' },
-              gridcolor: CHART.grid,
-              zeroline: false,
-              color: CHART.text,
-            },
-            yaxis: {
-              type: 'log',
-              title: { text: 'Orbital period (days)' },
-              gridcolor: CHART.grid,
-              zeroline: false,
-              color: CHART.text,
-            },
-            margin: { t: 48, r: 24, b: 56, l: 64 },
-            autosize: true,
-            showlegend: false,
-          }}
-          onClick={(event) => {
-            const name = event.points?.[0]?.text
-            if (name) selectPlanet(name)
-          }}
-          config={{ displaylogo: false, responsive: true }}
-          useResizeHandler
-          style={{ width: '100%', height: '520px' }}
-        />
-      </div>
-
-      <section className="ai-panel">
-        <button onClick={generateAiAnalysis} disabled={loadingAi || !selectedPlanet}>
-          Generate AI Analysis
-        </button>
-        {loadingAi && <p className="ai-status">Connecting to AI…</p>}
-        {aiSummary && (
-          <div className="ai-summary">
-            <p className="ai-caption">Speculative · GPT-3.5</p>
-            <p>{aiSummary}</p>
+      <div className="dashboard">
+        <div className="metrics">
+          <div className="metric">
+            <span className="metric-label">Name</span>
+            <span className="metric-value">{selectedPlanet}</span>
           </div>
-        )}
-        {error && planets.length > 0 && <p className="error">{error}</p>}
-      </section>
+          <div className="metric">
+            <span className="metric-label">Mass (Earth masses)</span>
+            <span className="metric-value">{formatNumber(selectedPlanetMass)}</span>
+          </div>
+          <div className="metric">
+            <span className="metric-label">Orbital period (days)</span>
+            <span className="metric-value">{formatNumber(selectedPlanetOrbitalPeriod)}</span>
+          </div>
+        </div>
+
+        <div className="chart">
+          <Plot
+            data={[
+              {
+                x: otherPlanets.map((p) => p.pl_bmasse),
+                y: otherPlanets.map((p) => p.pl_orbper),
+                text: otherPlanets.map((p) => p.pl_name),
+                type: 'scatter',
+                mode: 'markers',
+                marker: { size: 6, color: CHART.marker, opacity: 0.55 },
+                hovertemplate: '%{text}<extra></extra>',
+              },
+              {
+                x: selected ? [selected.pl_bmasse] : [],
+                y: selected ? [selected.pl_orbper] : [],
+                text: selected ? [selected.pl_name] : [],
+                type: 'scatter',
+                mode: 'markers',
+                marker: {
+                  size: 16,
+                  color: CHART.selected,
+                  opacity: 1,
+                  line: { width: 2.5, color: CHART.ring },
+                },
+                hovertemplate: '%{text}<extra></extra>',
+                showlegend: false,
+              },
+            ]}
+            layout={{
+              title: {
+                text: 'Planet mass vs orbital period',
+                font: { size: 15, color: CHART.text },
+              },
+              paper_bgcolor: CHART.bg,
+              plot_bgcolor: CHART.plot,
+              font: { family: 'IBM Plex Sans, sans-serif', color: CHART.text },
+              xaxis: {
+                type: 'log',
+                title: { text: 'Mass (Earth masses)' },
+                gridcolor: CHART.grid,
+                zeroline: false,
+                color: CHART.text,
+              },
+              yaxis: {
+                type: 'log',
+                title: { text: 'Orbital period (days)' },
+                gridcolor: CHART.grid,
+                zeroline: false,
+                color: CHART.text,
+              },
+              margin: { t: 48, r: 24, b: 56, l: 64 },
+              autosize: true,
+              showlegend: false,
+            }}
+            onClick={(event) => {
+              const name = event.points?.[0]?.text
+              if (name) selectPlanet(name)
+            }}
+            config={{ displaylogo: false, responsive: true }}
+            useResizeHandler
+            style={{ width: '100%', height: '520px' }}
+          />
+        </div>
+
+        <section className="ai-panel">
+          <button onClick={generateAiAnalysis} disabled={loadingAi || !selectedPlanet}>
+            Generate AI Analysis
+          </button>
+          {loadingAi && <p className="ai-status">Connecting to AI…</p>}
+          {aiSummary && (
+            <div className="ai-summary">
+              <p className="ai-caption">Speculative · GPT-3.5</p>
+              <p>{aiSummary}</p>
+            </div>
+          )}
+          {error && planets.length > 0 && <p className="error">{error}</p>}
+        </section>
+      </div>
     </div>
   )
 }
