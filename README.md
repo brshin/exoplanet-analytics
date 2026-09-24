@@ -88,7 +88,3 @@ select pl_name, pl_bmasse, pl_orbper from pscomppars
 ```
 
 `pl_bmasse` is planetary mass or Mass·sin(i) in Earth masses; `pl_orbper` is orbital period in days. `pscomppars` keeps one row per planet and fills each column from the best available reference, so a mass from one paper can sit next to a period from another. `scripts/refresh_planets.py` drops rows that are missing either value and writes one row per planet name to `api/planets.json`. The NASA Exoplanet Archive adds planets about weekly, which is why the refresh job runs weekly.
-
-## Legacy
-
-`app.py` is the original Streamlit app (`streamlit run app.py`). `exoplanet.py` is a standalone matplotlib plot and is not used by the dashboard.

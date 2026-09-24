@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel
 
-# Same key you used in .streamlit/secrets.toml — now an env var so React never sees it.
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 CORS_ORIGINS = [
