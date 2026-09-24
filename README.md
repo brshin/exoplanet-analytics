@@ -8,8 +8,8 @@ An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a 
 
 ## Features
 
-- Ingests `pl_name`, `pl_bmasse`, and `pl_orbper` from the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `pscomppars` table (one composite row per planet)
-- Cleans non-numeric values and keeps one row per planet name
+- Serves `pl_name`, `pl_bmasse`, and `pl_orbper` from `api/planets.json`
+- A weekly script pulls the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `pscomppars` table (one composite row per planet), drops rows missing a mass or period, and writes one row per planet name
 - Interactive Plotly scatter (log mass vs. log period) with hover labels
 - Planet selector with formatted mass and orbital-period metrics
 - Optional OpenAI (`gpt-3.5-turbo`) 2-sentence climate/environment hypothesis
@@ -30,8 +30,9 @@ Locally the same split runs at `localhost:5173` → `localhost:8000`. The browse
 | Layer | Stack |
 | --- | --- |
 | UI | React, Vite, Plotly.js |
-| API | FastAPI, pandas, requests |
-| Data | NASA Exoplanet Archive TAP |
+| API | FastAPI, pandas (reads the saved catalog) |
+| Catalog refresh | requests, pandas, GitHub Actions |
+| Data | NASA Exoplanet Archive TAP `pscomppars`, saved as `api/planets.json` |
 | AI | OpenAI `gpt-3.5-turbo` |
 | Hosting | Vercel (frontend), Render (API) |
 
@@ -64,7 +65,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). `/planets` reads `api/planets.json`. Refresh that file with `python scripts/refresh_planets.py`. A GitHub Action runs the same script every Monday.
+Open [http://localhost:5173](http://localhost:5173). `/planets` reads `api/planets.json`. Refresh that file with `python scripts/refresh_planets.py`. A GitHub Action runs the same script every Monday at 16:00 UTC.
 
 ## Environment variables
 
