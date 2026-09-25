@@ -85,6 +85,22 @@ class AnalyzeRequest(BaseModel):
     selectedPlanet: str
 
 
+ANALYZE_SYSTEM_PROMPT = """Write exactly two sentences for a public exoplanet chart.
+Sentence 1: classify the planet from mass only as rocky, super-Earth, ice giant, or gas giant.
+Sentence 2: compare the orbital period to Earth's 365 days (much shorter, similar, or much longer).
+Do not mention atmosphere, temperature, climate, the host star, or habitability.
+Do not add a third sentence."""
+
+
+def _prompt_number(n):
+    value = float(n)
+    if value >= 100:
+        return f"{value:,.1f}"
+    if value >= 1:
+        return f"{value:,.2f}"
+    return f"{value:,.3f}"
+
+
 @app.post("/analyze")
 def analyze(request: Request, body: AnalyzeRequest):
     if not _allow_analyze(_client_ip(request)):
@@ -107,21 +123,21 @@ def analyze(request: Request, body: AnalyzeRequest):
     selectedPlanetMass = match["pl_bmasse"].values[0]
     selectedPlanetOrbitalPeriod = match["pl_orbper"].values[0]
 
-    prompt = (
-        "You are writing a short, cautious note for a public exoplanet chart.\n"
+    user_prompt = (
         f"Planet: {selectedPlanet}\n"
-        f"Mass: {selectedPlanetMass} Earth masses\n"
-        f"Orbital period: {selectedPlanetOrbitalPeriod} days\n\n"
-        "These are the only facts. In exactly two sentences, hypothesize what kind of planet this is "
-        "(for example gas giant, ice giant, or rocky) and what its orbit implies. "
-        "Do not invent the host star, atmosphere, surface temperature, or habitability. "
-        "If the numbers are not enough, say so."
+        f"Mass: {_prompt_number(selectedPlanetMass)} Earth masses\n"
+        f"Orbital period: {_prompt_number(selectedPlanetOrbitalPeriod)} days"
     )
 
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+        max_tokens=80,
+        messages=[
+            {"role": "system", "content": ANALYZE_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
     )
 
     aiSummary = response.choices[0].message.content
