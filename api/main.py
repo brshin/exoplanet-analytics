@@ -107,7 +107,16 @@ def analyze(request: Request, body: AnalyzeRequest):
     selectedPlanetMass = match["pl_bmasse"].values[0]
     selectedPlanetOrbitalPeriod = match["pl_orbper"].values[0]
 
-    prompt = f"Act as a NASA astrophysicist. I am analyzing exoplanet {selectedPlanet}. It has a mass of {selectedPlanetMass} Earth masses and an orbital period of {selectedPlanetOrbitalPeriod} days. Give me a 2-sentence scientific hypothesis of what its climate or environment might be like."
+    prompt = (
+        "You are writing a short, cautious note for a public exoplanet chart.\n"
+        f"Planet: {selectedPlanet}\n"
+        f"Mass: {selectedPlanetMass} Earth masses\n"
+        f"Orbital period: {selectedPlanetOrbitalPeriod} days\n\n"
+        "These are the only facts. In exactly two sentences, hypothesize what kind of planet this is "
+        "(for example gas giant, ice giant, or rocky) and what its orbit implies. "
+        "Do not invent the host star, atmosphere, surface temperature, or habitability. "
+        "If the numbers are not enough, say so."
+    )
 
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(

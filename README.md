@@ -12,7 +12,7 @@ An interactive dashboard for confirmed exoplanets: mass vs. orbital period on a 
 - A weekly script pulls the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/) TAP `pscomppars` table (one composite row per planet), drops rows missing a mass or period, and writes one row per planet name
 - Interactive Plotly scatter (log mass vs. log period) with hover labels
 - Planet selector with formatted mass and orbital-period metrics
-- Optional OpenAI (`gpt-4o-mini`) 2-sentence climate/environment hypothesis, capped at 5 requests per IP per hour
+- Optional OpenAI (`gpt-4o-mini`) 2-sentence planet-type and orbit hypothesis from mass and period only, capped at 5 requests per IP per hour
 
 ## Architecture
 
