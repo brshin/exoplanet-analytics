@@ -130,15 +130,21 @@ def analyze(request: Request, body: AnalyzeRequest):
     )
 
     client = OpenAI(api_key=api_key)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        temperature=0.2,
-        max_tokens=80,
-        messages=[
-            {"role": "system", "content": ANALYZE_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0.2,
+            max_tokens=80,
+            messages=[
+                {"role": "system", "content": ANALYZE_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="AI interpretation is unavailable right now.",
+        ) from exc
 
     aiSummary = response.choices[0].message.content
     return {"aiSummary": aiSummary}

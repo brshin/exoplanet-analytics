@@ -1,12 +1,15 @@
 :root {
-  --bg: #0c1016;
-  --surface: #141b24;
-  --border: #243040;
-  --text: #e8edf2;
-  --muted: #8b98a8;
-  --accent: #5b9fd4;
-  --accent-hover: #7eb6e0;
-  --danger: #e07a7a;
+  color-scheme: dark;
+  --bg: #060c16;
+  --surface: #0f1c2f;
+  --border: rgba(145, 169, 202, 0.16);
+  --text: #edf3fb;
+  --muted: #899bb2;
+  --accent: #65b8e4;
+  --accent-hover: #8cd2f5;
+  --danger: #ff949e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 html,
@@ -15,9 +18,31 @@ body,
   min-height: 100%;
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #9f8cff;
+  outline-offset: 3px;
+}
+
+::selection {
+  color: #fff;
+  background: rgba(124, 95, 235, 0.52);
 }
