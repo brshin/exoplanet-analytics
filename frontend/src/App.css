@@ -1,7 +1,6 @@
 .app-shell {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
 }
 
 .app-shell::before {
@@ -56,15 +55,17 @@
 }
 
 .topbar {
-  position: relative;
-  z-index: 20;
+  position: sticky;
+  top: 0;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 72px;
   padding: 0 max(2rem, calc((100vw - 1440px) / 2));
   border-bottom: 1px solid rgba(145, 169, 202, 0.13);
-  background: rgba(5, 12, 22, 0.72);
+  background: rgba(5, 12, 22, 0.86);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(18px);
 }
 
@@ -236,7 +237,7 @@
   position: relative;
   width: min(1440px, calc(100% - 4rem));
   margin: 0 auto;
-  padding: 4.5rem 0 2rem;
+  padding: 2.4rem 0 1.5rem;
   animation: fade-up 600ms ease-out;
 }
 
@@ -400,6 +401,9 @@
 .planet-panel {
   display: flex;
   flex-direction: column;
+  align-self: start;
+  position: sticky;
+  top: 88px;
   padding: 1.4rem;
 }
 
@@ -864,6 +868,7 @@
 
   .planet-panel {
     display: flex;
+    position: static;
   }
 
   .planet-visual {

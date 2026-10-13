@@ -7,6 +7,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+import httpx2
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -129,7 +130,10 @@ def analyze(request: Request, body: AnalyzeRequest):
         f"Orbital period: {_prompt_number(selectedPlanetOrbitalPeriod)} days"
     )
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(
+        api_key=api_key,
+        http_client=httpx2.Client(trust_env=False, timeout=30.0),
+    )
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",

@@ -15,7 +15,7 @@ const CHART = {
   selected: '#f3f7ff',
   selectedRing: '#9b7cff',
   earth: '#f6c667',
-  jupiter: '#b6a5ff',
+  jupiter: '#e39b4a',
 }
 
 const REFERENCES = [
