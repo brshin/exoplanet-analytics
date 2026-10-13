@@ -425,10 +425,12 @@ function App() {
 
           <aside className="panel planet-panel" aria-labelledby="selected-planet">
             <div className="planet-visual" aria-hidden="true">
-              <div className="planet-glow" />
-              <div className="planet-sphere" />
-              <div className="planet-orbit">
-                <span />
+              <div key={selectedPlanet} className="planet-stage">
+                <div className="planet-glow" />
+                <div className="planet-sphere" />
+                <div className="planet-orbit">
+                  <span />
+                </div>
               </div>
             </div>
 
