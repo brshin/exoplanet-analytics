@@ -142,6 +142,7 @@ function App() {
 
   function generateAiAnalysis() {
     setLoadingAi(true)
+    setAiSummary('')
     setAiError('')
 
     fetch(`${API}/analyze`, {
@@ -490,23 +491,10 @@ function App() {
               </p>
 
               {aiSummary ? (
-                <>
-                  <div
-                    className={`ai-summary${loadingAi ? ' is-refreshing' : ''}`}
-                    aria-live="polite"
-                  >
-                    <p>{aiSummary}</p>
-                    <span>Speculative · GPT-4o mini</span>
-                  </div>
-                  <button
-                    className="again-button"
-                    type="button"
-                    onClick={generateAiAnalysis}
-                    disabled={loadingAi || !selectedPlanet}
-                  >
-                    {loadingAi ? 'Reading the signals…' : 'Generate again'}
-                  </button>
-                </>
+                <div className="ai-summary" aria-live="polite">
+                  <p>{aiSummary}</p>
+                  <span>Speculative · GPT-4o mini</span>
+                </div>
               ) : (
                 <button
                   className="primary-button"
