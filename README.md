@@ -8,7 +8,7 @@ interactive, searchable dashboard powered by the NASA Exoplanet Archive.
 > The API is hosted on Render's free tier, so the first load can take a moment
 > while a sleeping instance wakes up.
 
-![Exoplanet Analytics desktop dashboard with Kepler-22 b selected](docs/exoplanet-analytics-desktop.png)
+![Exoplanet Analytics desktop dashboard with Kepler-22 b selected](docs/exoplanet-analytics-desktop.jpg)
 
 ## What you can do
 
@@ -184,7 +184,7 @@ frontend/
 ├── src/                    # React dashboard and styles
 └── package.json
 docs/
-└── exoplanet-analytics-desktop.png
+└── exoplanet-analytics-desktop.jpg
 scripts/
 └── refresh_planets.py      # NASA catalog ingestion
 .github/workflows/
