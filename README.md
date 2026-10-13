@@ -134,7 +134,7 @@ Returns the cleaned catalog:
 ```
 
 Returns a two-sentence mass and orbit interpretation. Requests are limited to
-five per IP address per rolling hour. The current limiter is in memory and is
+15 per IP address per rolling hour. The current limiter is in memory and is
 intended to protect this small public deployment, not to provide distributed
 rate limiting.
 

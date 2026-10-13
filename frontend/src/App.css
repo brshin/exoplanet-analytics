@@ -637,6 +637,11 @@
   background: rgba(8, 16, 28, 0.52);
   border-left: 2px solid #9179f5;
   border-radius: 4px 9px 9px 4px;
+  transition: opacity 180ms ease;
+}
+
+.ai-summary.is-refreshing {
+  opacity: 0.55;
 }
 
 .ai-summary p {
@@ -654,6 +659,33 @@
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.again-button {
+  margin-top: 0.7rem;
+  padding: 0;
+  color: #9aa8bd;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 168, 189, 0.35);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.again-button:hover:not(:disabled) {
+  color: #d7e0ec;
+  text-decoration-color: rgba(215, 224, 236, 0.55);
+}
+
+.again-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  text-decoration: none;
 }
 
 .error {

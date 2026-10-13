@@ -36,7 +36,7 @@ app.add_middleware(
 PLANETS_PATH = Path(__file__).resolve().parent / "planets.json"
 _cache = {"dfUnique": None, "mtime": None}
 
-ANALYZE_LIMIT = 5
+ANALYZE_LIMIT = 15
 ANALYZE_WINDOW_SECONDS = 60 * 60
 _analyze_hits = defaultdict(deque)
 
