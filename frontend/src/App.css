@@ -215,10 +215,12 @@
   cursor: pointer;
 }
 
-.suggestions button span:last-child {
+.suggestion-metrics {
+  flex: 0 0 auto;
   color: var(--muted);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .suggestions button:hover,

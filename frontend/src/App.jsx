@@ -285,7 +285,9 @@ function App() {
                     onClick={() => selectPlanet(planet.pl_name)}
                   >
                     <span>{planet.pl_name}</span>
-                    <span>{formatNumber(planet.pl_bmasse)} M⊕</span>
+                    <span className="suggestion-metrics">
+                      {formatNumber(planet.pl_bmasse)} M⊕ · {formatNumber(planet.pl_orbper)} d
+                    </span>
                   </button>
                 </li>
               ))}
