@@ -8,12 +8,14 @@ interactive, searchable dashboard powered by the NASA Exoplanet Archive.
 > The API is hosted on Render's free tier, so the first load can take a moment
 > while a sleeping instance wakes up.
 
+![Exoplanet Analytics desktop dashboard with Kepler-22 b selected](docs/exoplanet-analytics-desktop.png)
+
 ## What you can do
 
-- Explore 5,000+ confirmed planets on a log–log mass-versus-period chart.
-- Hover over any point to identify a planet.
-- Click a point or search by name to inspect its measured values.
-- Generate a concise AI interpretation based only on mass and orbital period.
+- Explore 6,000+ confirmed planets on a log–log mass-versus-period chart.
+- Hover over any point to identify a planet; use Zoom or Pan when the field is dense.
+- Click a point or search by name to inspect its mass and orbital period.
+- Generate a concise AI interpretation based only on those two measured values.
 - Work from a catalog refreshed automatically from NASA each week.
 
 AI interpretations are speculative, educational summaries—not scientific
@@ -76,7 +78,7 @@ The catalog and interactive API docs are then available at:
 - `http://localhost:8000/planets`
 - `http://localhost:8000/docs`
 
-The chart works without an OpenAI key. To enable **Generate AI Analysis**, set
+The chart works without an OpenAI key. To enable **Generate interpretation**, set
 `OPENAI_API_KEY` in `api/.env`.
 
 ### 2. Start the frontend
@@ -89,7 +91,8 @@ npm ci
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open [http://localhost:5173](http://localhost:5173). In local development, Vite
+proxies `/planets` and `/analyze` to the API, so `VITE_API_URL` can stay unset.
 
 ## Configuration
 
@@ -97,7 +100,7 @@ Open [http://localhost:5173](http://localhost:5173).
 | --- | --- | --- | --- |
 | `OPENAI_API_KEY` | API | unset | Enables the `/analyze` endpoint |
 | `CORS_ORIGINS` | API | local Vite origins | Comma-separated browser origins allowed to call the API |
-| `VITE_API_URL` | Frontend | `http://localhost:8000` | FastAPI base URL, embedded when Vite builds |
+| `VITE_API_URL` | Frontend | unset in local dev (Vite proxy) | Public FastAPI origin, embedded when Vite builds |
 
 Copy the included examples when you need to override a default:
 
@@ -180,6 +183,8 @@ api/
 frontend/
 ├── src/                    # React dashboard and styles
 └── package.json
+docs/
+└── exoplanet-analytics-desktop.png
 scripts/
 └── refresh_planets.py      # NASA catalog ingestion
 .github/workflows/
