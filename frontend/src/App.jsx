@@ -16,6 +16,7 @@ const CHART = {
   selectedRing: '#9b7cff',
   earth: '#f6c667',
   jupiter: '#e39b4a',
+  spike: 'rgba(154, 176, 204, 0.42)',
 }
 
 const REFERENCES = [
@@ -87,9 +88,17 @@ function App() {
     () => planets.find((planet) => planet.pl_name === selectedPlanet),
     [planets, selectedPlanet],
   )
-  const otherPlanets = useMemo(
-    () => planets.filter((planet) => planet.pl_name !== selectedPlanet),
+  const selectedIndex = useMemo(
+    () => planets.findIndex((planet) => planet.pl_name === selectedPlanet),
     [planets, selectedPlanet],
+  )
+  const catalog = useMemo(
+    () => ({
+      x: planets.map((planet) => planet.pl_bmasse),
+      y: planets.map((planet) => planet.pl_orbper),
+      text: planets.map((planet) => planet.pl_name),
+    }),
+    [planets],
   )
   const suggestions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -121,6 +130,8 @@ function App() {
   }, [])
 
   function selectPlanet(name) {
+    if (!name || name === selectedPlanet) return
+    if (REFERENCES.some((reference) => reference.name === name)) return
     setSelectedPlanet(name)
     setQuery('')
     setPickerOpen(false)
@@ -319,13 +330,24 @@ function App() {
               <Plot
                 data={[
                   {
-                    x: otherPlanets.map((planet) => planet.pl_bmasse),
-                    y: otherPlanets.map((planet) => planet.pl_orbper),
-                    customdata: otherPlanets.map((planet) => planet.pl_name),
-                    text: otherPlanets.map((planet) => planet.pl_name),
+                    x: catalog.x,
+                    y: catalog.y,
+                    text: catalog.text,
                     type: 'scattergl',
                     mode: 'markers',
-                    marker: { size: 5, color: CHART.marker, opacity: 0.48 },
+                    marker: { size: 6, color: CHART.marker, opacity: 0.52 },
+                    selectedpoints: selectedIndex >= 0 ? [selectedIndex] : [],
+                    selected: {
+                      marker: {
+                        size: 14,
+                        color: CHART.selected,
+                        opacity: 1,
+                        line: { width: 3, color: CHART.selectedRing },
+                      },
+                    },
+                    unselected: {
+                      marker: { opacity: 0.45 },
+                    },
                     hovertemplate:
                       '<b>%{text}</b><br>%{x:,.3~g} Earth masses<br>%{y:,.3~g} days<extra></extra>',
                     showlegend: false,
@@ -334,7 +356,7 @@ function App() {
                     x: [reference.mass],
                     y: [reference.period],
                     text: [reference.name],
-                    type: 'scatter',
+                    type: 'scattergl',
                     mode: 'markers',
                     name: reference.name,
                     marker: {
@@ -347,32 +369,19 @@ function App() {
                       `<b>${reference.name}</b><br>${formatNumber(reference.mass)} Earth masses` +
                       `<br>${formatNumber(reference.period)} days<extra></extra>`,
                   })),
-                  {
-                    x: selected ? [selected.pl_bmasse] : [],
-                    y: selected ? [selected.pl_orbper] : [],
-                    customdata: selected ? [selected.pl_name] : [],
-                    text: selected ? [selected.pl_name] : [],
-                    type: 'scatter',
-                    mode: 'markers',
-                    marker: {
-                      size: 17,
-                      color: CHART.selected,
-                      opacity: 1,
-                      line: { width: 4, color: CHART.selectedRing },
-                    },
-                    hovertemplate:
-                      '<b>%{text}</b><br>%{x:,.3~g} Earth masses<br>%{y:,.3~g} days<extra></extra>',
-                    showlegend: false,
-                  },
                 ]}
                 layout={{
                   paper_bgcolor: CHART.paper,
                   plot_bgcolor: CHART.plot,
                   font: { family: 'IBM Plex Sans, sans-serif', color: CHART.text, size: 11 },
+                  hovermode: 'closest',
+                  hoverdistance: 28,
+                  spikedistance: 28,
                   hoverlabel: {
                     bgcolor: '#111d30',
-                    bordercolor: '#344a68',
-                    font: { color: '#f3f7ff', family: 'IBM Plex Sans, sans-serif' },
+                    bordercolor: '#5b7ea3',
+                    align: 'left',
+                    font: { color: '#f3f7ff', family: 'IBM Plex Sans, sans-serif', size: 12 },
                   },
                   xaxis: {
                     type: 'log',
@@ -381,6 +390,12 @@ function App() {
                     zeroline: false,
                     color: CHART.text,
                     fixedrange: false,
+                    showspikes: true,
+                    spikemode: 'across',
+                    spikesnap: 'cursor',
+                    spikecolor: CHART.spike,
+                    spikethickness: 1,
+                    spikedash: 'dot',
                   },
                   yaxis: {
                     type: 'log',
@@ -389,6 +404,12 @@ function App() {
                     zeroline: false,
                     color: CHART.text,
                     fixedrange: false,
+                    showspikes: true,
+                    spikemode: 'across',
+                    spikesnap: 'cursor',
+                    spikecolor: CHART.spike,
+                    spikethickness: 1,
+                    spikedash: 'dot',
                   },
                   legend: {
                     orientation: 'h',
@@ -400,11 +421,13 @@ function App() {
                   margin: { t: 48, r: 20, b: 64, l: 72 },
                   autosize: true,
                   showlegend: true,
-                  dragmode: 'pan',
+                  // Pan mode steals marker clicks; use the modebar Pan tool when needed.
+                  dragmode: false,
+                  uirevision: 'orbital-atlas',
                 }}
                 onClick={(event) => {
-                  const name = event.points?.[0]?.customdata
-                  if (name) selectPlanet(name)
+                  const name = event.points?.[0]?.text
+                  if (typeof name === 'string') selectPlanet(name)
                 }}
                 config={{
                   displaylogo: false,
@@ -419,7 +442,7 @@ function App() {
 
             <div className="chart-footer">
               <span>Both axes use logarithmic scales</span>
-              <span>Scroll to zoom · drag to pan</span>
+              <span>Scroll to zoom · Pan tool to drag</span>
             </div>
           </section>
 
