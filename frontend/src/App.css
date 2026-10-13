@@ -556,6 +556,10 @@
   white-space: nowrap;
 }
 
+.metric-fade {
+  animation: metric-fade 180ms ease-out;
+}
+
 .interpretation {
   padding: 1rem;
   background:
@@ -815,6 +819,16 @@
   }
 }
 
+@keyframes metric-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1080px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -949,7 +963,8 @@
   }
 
   .planet-glow,
-  .planet-stage {
+  .planet-stage,
+  .metric-fade {
     animation: none;
   }
 }

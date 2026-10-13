@@ -468,13 +468,19 @@ function App() {
             <div className="metrics">
               <div className="metric">
                 <span>Planet mass</span>
-                <strong>{formatNumber(selected?.pl_bmasse)}</strong>
+                <strong key={`${selectedPlanet}-mass`} className="metric-fade">
+                  {formatNumber(selected?.pl_bmasse)}
+                </strong>
                 <small>Earth masses · M⊕</small>
               </div>
               <div className="metric">
                 <span>Orbital period</span>
-                <strong>{formatNumber(selected?.pl_orbper)}</strong>
-                <small>{periodContext(selected?.pl_orbper)}</small>
+                <strong key={`${selectedPlanet}-period`} className="metric-fade">
+                  {formatNumber(selected?.pl_orbper)}
+                </strong>
+                <small key={`${selectedPlanet}-period-context`} className="metric-fade">
+                  {periodContext(selected?.pl_orbper)}
+                </small>
               </div>
             </div>
 
