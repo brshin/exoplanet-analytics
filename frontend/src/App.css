@@ -1,6 +1,8 @@
 .app-shell {
   position: relative;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .app-shell::before {
@@ -62,7 +64,7 @@
   align-items: center;
   justify-content: space-between;
   min-height: 72px;
-  padding: 0 max(2rem, calc((100vw - 1440px) / 2));
+  padding: 0 max(2rem, calc((100% - 1440px) / 2));
   border-bottom: 1px solid rgba(145, 169, 202, 0.13);
   background: rgba(5, 12, 22, 0.86);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);

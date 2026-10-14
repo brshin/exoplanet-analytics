@@ -20,14 +20,24 @@ body,
 
 html {
   background: var(--bg);
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
   background: var(--bg);
   color: var(--text);
   font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 button,
